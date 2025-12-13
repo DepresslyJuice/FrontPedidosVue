@@ -12,7 +12,16 @@ export const productoService = {
       sortOrder
     })
     
-    const response = await fetch(`${API_URL}/productos?${params}`)
+    const response = await fetch(`${API_URL}/productos?${params}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
     return response.json()
   }
 }

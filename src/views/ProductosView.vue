@@ -7,14 +7,26 @@
     <div v-else-if="error" class="error">{{ error }}</div>
     
     <div v-else>
-      <div class="productos-grid">
-        <div v-for="producto in productos" :key="producto.idProducto" class="producto-card">
-          <h3>{{ producto.nombre }}</h3>
-          <p class="descripcion">{{ producto.descripcion }}</p>
-          <p class="precio">${{ producto.precio }}</p>
-          <small class="fecha">Creado: {{ formatDate(producto.createdAt) }}</small>
-        </div>
-      </div>
+      <table class="productos-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Precio</th>
+            <th>Fecha Creación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="producto in productos" :key="producto.idProducto">
+            <td>{{ producto.idProducto }}</td>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.descripcion }}</td>
+            <td>${{ producto.precio }}</td>
+            <td>{{ formatDate(producto.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
       
       <div class="pagination-info">
         Página {{ page }} de {{ totalPages }} - Total: {{ total }} productos
@@ -42,14 +54,16 @@ const formatDate = (dateString: string) => {
 const loadProductos = async () => {
   try {
     loading.value = true
+    console.log('Cargando productos...')
     const response = await productoService.getProductos()
+    console.log('Respuesta de la API:', response)
     productos.value = response.data
     total.value = response.total
     page.value = response.page
     totalPages.value = response.totalPages
   } catch (err) {
-    error.value = 'Error al cargar los productos'
-    console.error(err)
+    error.value = `Error al cargar los productos: ${err}`
+    console.error('Error completo:', err)
   } finally {
     loading.value = false
   }
@@ -77,41 +91,29 @@ onMounted(() => {
   color: #e74c3c;
 }
 
-.productos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
   margin-bottom: 20px;
-}
-
-.producto-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.producto-card h3 {
-  margin: 0 0 8px 0;
+.productos-table th,
+.productos-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.productos-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
   color: #2c3e50;
 }
 
-.descripcion {
-  color: #666;
-  margin: 8px 0;
-}
-
-.precio {
-  font-size: 20px;
-  font-weight: bold;
-  color: #27ae60;
-  margin: 8px 0;
-}
-
-.fecha {
-  color: #999;
-  font-size: 12px;
+.productos-table tr:hover {
+  background-color: #f5f5f5;
 }
 
 .pagination-info {
