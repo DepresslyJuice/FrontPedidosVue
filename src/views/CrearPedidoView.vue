@@ -221,8 +221,8 @@ const agregarAlPedido = (producto: Producto) => {
       idProducto: producto.idProducto,
       nombre: producto.nombre,
       cantidad,
-      precio: producto.precio,
-      subtotal: cantidad * producto.precio
+      precio: Number(producto.precio),
+      subtotal: cantidad * Number(producto.precio)
     })
   }
   

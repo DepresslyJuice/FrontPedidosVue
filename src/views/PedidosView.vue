@@ -34,7 +34,7 @@
     <div class="pedidos-list">
       <div 
         v-for="pedido in pedidos" 
-        :key="pedido.id" 
+        :key="pedido.idPedido" 
         class="pedido-card"
       >
         <div class="pedido-header">
@@ -66,7 +66,7 @@
         <div class="pedido-actions">
           <select 
             v-if="canChangeStatus(pedido.estado)" 
-            @change="cambiarEstadoPedido(pedido.idPedido, $event.target.value)"
+            @change="cambiarEstadoPedido(pedido.idPedido, ($event.target as HTMLSelectElement).value)"
           >
             <option value="">Cambiar estado</option>
             <option value="confirmado">Confirmar</option>
