@@ -55,7 +55,7 @@
           <h4>Productos:</h4>
           <ul>
             <li v-for="detalle in pedido.detalles" :key="detalle.idDetalle">
-              {{ detalle.nombreProducto }} - Cantidad: {{ detalle.cantidad }} - ${{ detalle.subtotal }}
+              {{ detalle.nombreProducto }} - Cantidad: {{ detalle.cantidad }} - Precio: ${{ detalle.precioUnitario }} - Subtotal: ${{ detalle.subtotal }}
             </li>
           </ul>
         </div>
