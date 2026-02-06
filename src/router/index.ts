@@ -22,13 +22,13 @@ const router = createRouter({
       path: '/pedidos',
       name: 'pedidos',
       component: PedidosView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
       path: '/crear-pedido',
       name: 'crear-pedido',
       component: CrearPedidoView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
       path: '/',
@@ -43,6 +43,14 @@ router.beforeEach((to) => {
   // Si la ruta requiere autenticación y no hay usuario, redirigir al login
   if (to.meta.requiresAuth && !user) {
     return '/login'
+  }
+  
+  // Si la ruta requiere admin y el usuario no es admin, redirigir a productos
+  if (to.meta.requiresAdmin && user) {
+    const userData = JSON.parse(user)
+    if (!userData.roles?.includes('admin')) {
+      return '/productos'
+    }
   }
 })
 

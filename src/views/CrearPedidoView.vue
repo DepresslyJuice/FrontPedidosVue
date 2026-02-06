@@ -1,175 +1,161 @@
 <template>
   <div class="crear-pedido-container">
     <div class="header">
-      <h1>Crear Nuevo Pedido</h1>
-      <button @click="crearPedidoAction" class="btn-primary" :disabled="carrito.length === 0">
-        Crear Pedido ({{ carrito.length }} items)
-      </button>
+      <div class="header-text">
+        <h1>Realizar Pedido</h1>
+        <p class="subtitle">Explora nuestros productos y arma tu pedido</p>
+      </div>
+      
+      <!-- Search Bar -->
+      <div class="search-container">
+        <input 
+          v-model="search" 
+          @keyup.enter="handleSearch"
+          placeholder="¿Qué estás buscando?"
+          class="search-input"
+        />
+        <button @click="handleSearch" class="btn-search">🔍</button>
+      </div>
     </div>
     
-    <div class="filters">
-      <input 
-        v-model="search" 
-        @keyup.enter="handleSearch"
-        placeholder="Buscar productos..."
-        class="search-input"
-      />
-      <button @click="handleSearch" class="btn-secondary">Buscar</button>
-    </div>
-    
-    <div v-if="error" class="error">{{ error }}</div>
-    
-    <div v-if="loading" class="loading">Cargando productos...</div>
-    
-    <div v-else>
-      <table class="productos-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Precio</th>
-            <th>Cantidad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="producto in productos" :key="producto.idProducto">
-            <td>{{ producto.idProducto }}</td>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.descripcion }}</td>
-            <td>${{ producto.precio }}</td>
-            <td>
-              <input 
-                type="number" 
-                min="1" 
-                v-model="cantidades[producto.idProducto]" 
-                placeholder="0"
-                class="cantidad-input"
-              >
-            </td>
-            <td class="actions">
-              <button 
-                @click="agregarAlPedido(producto)" 
-                :disabled="!cantidades[producto.idProducto]" 
-                class="btn-edit"
-              >
-                Agregar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Checkout/Form Section (Visible only when checkout param is present) -->
+    <div v-if="isCheckoutMode" class="checkout-section">
+      <div class="checkout-header">
+        <button @click="cancelCheckout" class="btn-back">← Volver a productos</button>
+        <h2>Finalizar Compra</h2>
+      </div>
 
-    <!-- Carrito Modal -->
-    <div v-if="showCarrito" class="modal-overlay" @click="closeCarrito">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>Carrito de Pedido</h3>
-          <button @click="closeCarrito" class="btn-close">×</button>
-        </div>
-        <div class="modal-body">
-          <div v-if="carrito.length === 0" class="empty-cart">
-            No hay productos en el carrito
+      <div class="checkout-grid">
+        <div class="order-summary">
+          <h3>Resumen del Pedido</h3>
+          <div v-if="cartItems.length === 0" class="empty-state">
+            Tu carrito está vacío
           </div>
-          <div v-else>
-            <table class="carrito-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Cantidad</th>
-                  <th>Precio</th>
-                  <th>Subtotal</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in carrito" :key="item.idProducto">
-                  <td>{{ item.nombre }}</td>
-                  <td>{{ item.cantidad }}</td>
-                  <td>${{ item.precio }}</td>
-                  <td>${{ item.subtotal }}</td>
-                  <td>
-                    <button @click="removerDelCarrito(item.idProducto)" class="btn-delete">
-                      Quitar
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="carrito-total">
-              <h3>Total: ${{ totalPedido }}</h3>
+          <div v-else class="summary-items">
+            <div v-for="item in cartItems" :key="item.idProducto" class="summary-item">
+              <span>{{ item.nombre }} (x{{ item.cantidad }})</span>
+              <span>${{ item.subtotal }}</span>
+            </div>
+            <div class="summary-total">
+              <span>Total a Pagar</span>
+              <span>${{ total }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-form">
+          <h3>Datos de Envío y Pago</h3>
+          <form @submit.prevent="crearPedidoAction">
+            <div class="form-group">
+              <label>Método de Pago</label>
+              <select v-model="formPedido.metodoPago" required class="input-field">
+                <option value="">Selecciona un método</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                <option value="transferencia">Transferencia Bancaria</option>
+              </select>
             </div>
             
-            <!-- Formulario de datos del pedido -->
-            <div class="form-section">
-              <h4>Datos del Pedido</h4>
-              <div class="form-group">
-                <label>Método de Pago:</label>
-                <select v-model="formPedido.metodoPago" required>
-                  <option value="">Seleccionar método</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="transferencia">Transferencia</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label>Dirección de Entrega:</label>
-                <input v-model="formPedido.direccion" type="text" required placeholder="Dirección completa">
-              </div>
-              
-              <div class="form-group">
-                <label>Observaciones:</label>
-                <textarea v-model="formPedido.observaciones" placeholder="Instrucciones especiales (opcional)"></textarea>
-              </div>
+            <div class="form-group">
+              <label>Dirección de Entrega</label>
+              <input 
+                v-model="formPedido.direccion" 
+                type="text" 
+                required 
+                placeholder="Calle, número, colonia..."
+                class="input-field"
+              >
             </div>
-          </div>
-          <div class="modal-actions">
-            <button @click="limpiarCarrito" class="btn-secondary">Limpiar Carrito</button>
-            <button @click="crearPedidoAction" class="btn-primary" :disabled="!canCreateOrder">
+            
+            <div class="form-group">
+              <label>Observaciones (Opcional)</label>
+              <textarea 
+                v-model="formPedido.observaciones" 
+                placeholder="Instrucciones para el repartidor, etc."
+                class="input-field textarea"
+              ></textarea>
+            </div>
+
+            <div v-if="error" class="error-msg">{{ error }}</div>
+
+            <button type="submit" class="btn-primary btn-block" :disabled="!canCreateOrder">
               Confirmar Pedido
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
+    
+    <!-- Product Grid (Default View) -->
+    <div v-else>
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando catálogo...</p>
+      </div>
+      
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+        <button @click="cargarProductos" class="btn-retry">Intentar de nuevo</button>
+      </div>
 
-    <!-- Botón flotante del carrito -->
-    <button v-if="carrito.length > 0" @click="showCarrito = true" class="cart-float">
-      🛒 {{ carrito.length }}
-    </button>
+      <div v-else class="products-grid">
+        <ProductCard 
+          v-for="producto in productos" 
+          :key="producto.idProducto" 
+          :producto="producto" 
+        />
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="!loading && productos.length > 0" class="pagination">
+         <button 
+          @click="changePage(pagination.currentPage - 1)" 
+          :disabled="pagination.currentPage <= 1"
+          class="btn-page"
+        >
+          Anterior
+        </button>
+        <span class="page-info">Página {{ pagination.currentPage }} de {{ pagination.totalPages }}</span>
+        <button 
+          @click="changePage(pagination.currentPage + 1)" 
+          :disabled="pagination.currentPage >= pagination.totalPages"
+          class="btn-page"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getProductos } from '@/services/producto/producto.service'
 import { crearPedido } from '@/services/pedido/pedido.service'
 import type { Producto, FilterProductoDto } from '@/models/producto.model'
-
-interface ItemCarrito {
-  idProducto: number
-  nombre: string
-  cantidad: number
-  precio: number
-  subtotal: number
-}
+import { useCart } from '@/composables/useCart'
+import ProductCard from '@/components/ProductCard.vue'
 
 const router = useRouter()
+const route = useRoute()
+const { cartItems, total, clearCart } = useCart()
+
 const productos = ref<Producto[]>([])
 const loading = ref(false)
 const error = ref('')
-const showCarrito = ref(false)
-const cantidades = ref<Record<number, number>>({})
-const carrito = ref<ItemCarrito[]>([])
 const search = ref('')
+
 const filters = ref<FilterProductoDto>({
   page: 1,
-  limit: 10,
+  limit: 12, // Increased limit for grid view
   activo: true
+})
+
+const pagination = ref({
+  total: 0,
+  totalPages: 0,
+  currentPage: 1
 })
 
 const formPedido = ref({
@@ -178,12 +164,10 @@ const formPedido = ref({
   observaciones: ''
 })
 
-const totalPedido = computed(() => {
-  return carrito.value.reduce((total, item) => total + item.subtotal, 0)
-})
+const isCheckoutMode = computed(() => route.query.checkout === 'true')
 
 const canCreateOrder = computed(() => {
-  return carrito.value.length > 0 && formPedido.value.metodoPago && formPedido.value.direccion
+  return cartItems.value.length > 0 && formPedido.value.metodoPago && formPedido.value.direccion && !loading.value
 })
 
 const cargarProductos = async () => {
@@ -193,8 +177,13 @@ const cargarProductos = async () => {
   try {
     const response = await getProductos(filters.value)
     productos.value = response.data
+    pagination.value = {
+      total: response.total,
+      totalPages: response.totalPages,
+      currentPage: response.page
+    }
   } catch (err: any) {
-    error.value = 'Error al cargar productos'
+    error.value = 'No se pudieron cargar los productos.'
     console.error(err)
   } finally {
     loading.value = false
@@ -207,49 +196,21 @@ const handleSearch = () => {
   cargarProductos()
 }
 
-const agregarAlPedido = (producto: Producto) => {
-  const cantidad = cantidades.value[producto.idProducto]
-  if (!cantidad || cantidad <= 0) return
-
-  const itemExistente = carrito.value.find(item => item.idProducto === producto.idProducto)
-  
-  if (itemExistente) {
-    itemExistente.cantidad += cantidad
-    itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio
-  } else {
-    carrito.value.push({
-      idProducto: producto.idProducto,
-      nombre: producto.nombre,
-      cantidad,
-      precio: Number(producto.precio),
-      subtotal: cantidad * Number(producto.precio)
-    })
-  }
-  
-  cantidades.value[producto.idProducto] = 0
+const changePage = (page: number) => {
+  filters.value.page = page
+  cargarProductos()
 }
 
-const removerDelCarrito = (idProducto: number) => {
-  const index = carrito.value.findIndex(item => item.idProducto === idProducto)
-  if (index > -1) {
-    carrito.value.splice(index, 1)
-  }
-}
-
-const limpiarCarrito = () => {
-  carrito.value = []
-  showCarrito.value = false
-}
-
-const closeCarrito = () => {
-  showCarrito.value = false
+const cancelCheckout = () => {
+  router.push('/crear-pedido')
 }
 
 const crearPedidoAction = async () => {
   if (!canCreateOrder.value) return
+  loading.value = true
   
   try {
-    const detalles = carrito.value.map(item => ({
+    const detalles = cartItems.value.map(item => ({
       idProducto: item.idProducto,
       cantidad: item.cantidad
     }))
@@ -261,23 +222,29 @@ const crearPedidoAction = async () => {
       detalles
     })
     
-    alert('Pedido creado exitosamente')
-    limpiarCarrito()
-    formPedido.value = { metodoPago: '', direccion: '', observaciones: '' }
+    clearCart()
+    alert('Pedido creado exitosamente!')
     router.push('/pedidos')
-  } catch (error: any) {
-    error.value = error.response?.data?.message || 'Error al crear el pedido'
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Error al crear el pedido'
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(() => {
   cargarProductos()
 })
+
+// Watch query param changes to handle browser back button
+watch(() => route.query.checkout, () => {
+  // Logic is handled by computed `isCheckoutMode`
+})
 </script>
 
 <style scoped>
 .crear-pedido-container {
-  padding: 20px;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -285,244 +252,220 @@ onMounted(() => {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.filters {
+.header-text h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: #2d3436;
+}
+
+.subtitle {
+  color: #636e72;
+  margin: 0.5rem 0 0 0;
+}
+
+.search-container {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 400px;
 }
 
 .search-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 50px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-.btn-primary, .btn-secondary, .btn-edit, .btn-delete {
-  padding: 8px 16px;
+.search-input:focus {
+  border-color: #0984e3;
+}
+
+.btn-search {
+  background: #0984e3;
+  color: white;
   border: none;
-  border-radius: 4px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary {
-  background: #007bff;
-  color: white;
+/* Grid Layout */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
-.btn-primary:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-edit {
-  background: #28a745;
-  color: white;
-}
-
-.btn-edit:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.btn-delete {
-  background: #dc3545;
-  color: white;
-}
-
-.productos-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.productos-table th,
-.productos-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-.productos-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-.cantidad-input {
-  width: 80px;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.actions {
-  white-space: nowrap;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 20px;
-  font-size: 18px;
-}
-
-.error {
-  color: #dc3545;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+/* Pagination */
+.pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  gap: 1.5rem;
+  margin-top: 3rem;
 }
 
-.modal {
+.btn-retry, .btn-page {
+  padding: 0.6rem 1.2rem;
   background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  color: #2d3436;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.modal-header {
+.btn-page:hover:not(:disabled) {
+  background: #f1f3f5;
+  border-color: #b2bec3;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Checkout Section */
+.checkout-section {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.checkout-header {
+  margin-bottom: 2rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #ddd;
+  gap: 1rem;
 }
 
-.btn-close {
+.btn-back {
   background: none;
   border: none;
-  font-size: 24px;
+  color: #636e72;
   cursor: pointer;
+  font-size: 1rem;
+  text-decoration: underline;
 }
 
-.modal-body {
-  padding: 20px;
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
 }
 
-.carrito-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+@media (max-width: 768px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.carrito-table th,
-.carrito-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
+.order-summary, .order-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-.carrito-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
+.summary-items {
+  margin-top: 1.5rem;
 }
 
-.carrito-total {
-  text-align: right;
-  margin: 20px 0;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 4px;
-}
-
-.carrito-total h3 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.modal-actions {
+.summary-item {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f1f3f5;
+  color: #636e72;
 }
 
-.empty-cart {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
-}
-
-.cart-float {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 15px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  z-index: 100;
-}
-
-.cart-float:hover {
-  background: #0056b3;
-}
-
-.form-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #ddd;
-}
-
-.form-section h4 {
-  margin: 0 0 15px 0;
-  color: #2c3e50;
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #2d3436;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #555;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2d3436;
 }
 
-.form-group select,
-.form-group input,
-.form-group textarea {
+.input-field {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 0.8rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
 }
 
-.form-group textarea {
-  height: 80px;
+.input-field:focus {
+  border-color: #0984e3;
+  outline: none;
+}
+
+.textarea {
+  min-height: 100px;
   resize: vertical;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  background-color: #0984e3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-block:hover:not(:disabled) {
+  background-color: #0773c5;
+}
+
+.btn-block:disabled {
+  background-color: #b2bec3;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #e74c3c;
+  background: #fadbd8;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
 }
 </style>
