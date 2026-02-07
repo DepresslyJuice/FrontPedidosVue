@@ -1,6 +1,6 @@
 export interface LoginRequest {
     email: string;
-    password: string;  
+    password: string;
 }
 
 export interface LoginResponse {
@@ -12,7 +12,7 @@ export interface LoginResponse {
         roles: string[];
     };
     token?: string;
-}   
+}
 
 
 export interface RegisterRequest {
@@ -43,3 +43,22 @@ export interface RecoveryPasswordResponse {
     message: string;
 }
 
+
+export interface ResetPasswordRequest {
+    email: string;
+    code: string;
+    newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+    message: string;
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+    message: string;
+}
