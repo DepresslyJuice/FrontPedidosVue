@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { register } from '@/services/auth/register.service';
 import type { RegisterRequest } from '@/models/auth.model';
+import { Eye, EyeOff } from 'lucide-vue-next';
 
 const registerForm = ref<RegisterRequest>({
     nombre: '',
@@ -93,7 +94,8 @@ const handleRegister = async () => {
                     required
                 />
                 <span class="toggle" @click="showPassword = !showPassword">
-                    {{ showPassword ? '🙈' : '👁' }}
+                    <EyeOff v-if="showPassword" :size="20" />
+                    <Eye v-else :size="20" />
                 </span>
             </div>
 

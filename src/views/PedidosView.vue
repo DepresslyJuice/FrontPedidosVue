@@ -53,7 +53,7 @@
 
     <!-- Empty State -->
     <div v-else-if="pedidos.length === 0" class="empty-state">
-      <div class="empty-icon">📦</div>
+      <Package :size="64" class="empty-icon" />
       <h3>No se encontraron pedidos</h3>
       <p>Intenta ajustar los filtros de búsqueda</p>
     </div>
@@ -76,19 +76,19 @@
             <span class="order-total">${{ pedido.total }}</span>
           </div>
           <div class="header-meta">
-            <span>📅 {{ formatDate(pedido.fecha) }}</span>
-            <span>💳 {{ pedido.metodoPago }}</span>
+            <span><Calendar :size="16" /> {{ formatDate(pedido.fecha) }}</span>
+            <span><CreditCard :size="16" /> {{ pedido.metodoPago }}</span>
           </div>
         </div>
         
         <div class="card-body">
           <div class="location-info">
-            <span class="icon">📍</span>
+            <MapPin :size="18" class="icon" />
             <p>{{ pedido.direccion }}</p>
           </div>
           
           <div v-if="pedido.observaciones" class="notes-info">
-             <span class="icon">📝</span>
+             <FileText :size="18" class="icon" />
              <p>{{ pedido.observaciones }}</p>
           </div>
 
@@ -138,7 +138,7 @@
               class="btn-icon cancel"
               title="Cancelar Pedido"
             >
-              🚫
+              <Ban :size="18" />
               <span class="btn-tooltip">Cancelar</span>
             </button>
             
@@ -148,7 +148,7 @@
               class="btn-icon delete"
               title="Eliminar Pedido"
             >
-               🗑️
+               <Trash2 :size="18" />
                <span class="btn-tooltip">Eliminar</span>
             </button>
           </div>
@@ -188,6 +188,9 @@ import {
   eliminarPedido 
 } from '@/services/pedido/pedido.service'
 import { type Pedido, type FilterPedidoDto, EstadoPedido } from '@/models/pedido.model'
+import { 
+  Package, MapPin, FileText, Ban, Trash2, CreditCard, Calendar, ChevronDown, ChevronUp 
+} from 'lucide-vue-next'
 
 const pedidos = ref<Pedido[]>([])
 const loading = ref(false)

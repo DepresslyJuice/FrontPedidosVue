@@ -3,7 +3,9 @@
     <div class="cart-drawer" @click.stop>
       <div class="cart-header">
         <h3>Tu Carrito ({{ cartCount }})</h3>
-        <button @click="toggleCart" class="btn-close">×</button>
+        <button @click="toggleCart" class="btn-close">
+          <X :size="24" />
+        </button>
       </div>
 
       <div class="cart-body">
@@ -20,12 +22,18 @@
             </div>
             <div class="item-actions">
               <div class="quantity-controls">
-                <button @click="updateQuantity(item.idProducto, item.cantidad - 1)" class="btn-micro">-</button>
+                <button @click="updateQuantity(item.idProducto, item.cantidad - 1)" class="btn-micro">
+                  <Minus :size="12" />
+                </button>
                 <span>{{ item.cantidad }}</span>
-                <button @click="updateQuantity(item.idProducto, item.cantidad + 1)" class="btn-micro">+</button>
+                <button @click="updateQuantity(item.idProducto, item.cantidad + 1)" class="btn-micro">
+                  <Plus :size="12" />
+                </button>
               </div>
               <p class="item-subtotal">${{ item.subtotal }}</p>
-              <button @click="removeFromCart(item.idProducto)" class="btn-remove">×</button>
+              <button @click="removeFromCart(item.idProducto)" class="btn-remove">
+                <X :size="16" />
+              </button>
             </div>
           </div>
         </div>
@@ -47,6 +55,7 @@
 <script setup lang="ts">
 import { useCart } from '@/composables/useCart'
 import { useRouter } from 'vue-router'
+import { X, Plus, Minus } from 'lucide-vue-next'
 
 const { isCartOpen, toggleCart, cartItems, removeFromCart, updateQuantity, total, cartCount } = useCart()
 const router = useRouter()

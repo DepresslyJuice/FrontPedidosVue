@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { recoveryPassword, resetPassword } from '@/services/auth/recovery_password.service'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -161,7 +162,8 @@ const handleKey = (e: KeyboardEvent) => {
             @keydown="handleKey"
           />
           <span class="toggle" @click="showPassword = !showPassword">
-            {{ showPassword ? '🙈' : '👁' }}
+            <EyeOff v-if="showPassword" :size="20" />
+            <Eye v-else :size="20" />
           </span>
         </div>
 
