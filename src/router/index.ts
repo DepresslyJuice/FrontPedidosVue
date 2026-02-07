@@ -4,6 +4,7 @@ import PedidosView from '@/views/PedidosView.vue'
 import CrearPedidoView from '@/views/CrearPedidoView.vue'
 import LoguinView from '@/views/LoguinView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import RecoveryPasswordView from '@/views/RecoveryPasswordView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +18,11 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView
+    },
+    {
+      path: '/recovery-password',
+      name: 'recovery-password',
+      component: RecoveryPasswordView
     },
     {
       path: '/productos',

@@ -34,3 +34,12 @@ export interface RegisterResponse {
     };
     token?: string;
 }
+
+export interface RecoveryPasswordRequest {
+    email: string;
+}
+
+export interface RecoveryPasswordResponse {
+    message: string;
+}
+
