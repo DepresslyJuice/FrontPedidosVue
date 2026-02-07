@@ -69,6 +69,7 @@ const handleLogin = async () => {
       <button type="submit" :disabled="loading">
         {{ loading ? 'Cargando...' : 'Ingresar' }}
       </button>
+      <router-link to="/register">¿No tienes cuenta? Registrate</router-link>
     </form>
   </div>
 </template>

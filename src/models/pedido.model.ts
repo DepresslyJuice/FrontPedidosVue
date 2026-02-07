@@ -1,33 +1,56 @@
+// Enum para los estados del pedido, alineado con el backend
+export enum EstadoPedido {
+  PENDIENTE = 'PENDIENTE',
+  CONFIRMADO = 'CONFIRMADO',
+  EN_PROCESO = 'EN_PROCESO',
+  ENVIADO = 'ENVIADO',
+  ENTREGADO = 'ENTREGADO',
+  CANCELADO = 'CANCELADO',
+}
+
 export interface DetallePedido {
-  idDetalle: number
+  idDetalle?: number // Opcional al crear
   idProducto: number
-  nombreProducto: string
+  nombreProducto?: string // Viene del backend
   cantidad: number
-  precioUnitario: string
-  subtotal: string
+  precioUnitario: number
+  subtotal: number
 }
 
 export interface Pedido {
   idPedido: number
   idCliente: number
-  nombreCliente: string
-  fecha: string
-  estado: 'pendiente' | 'confirmado' | 'preparando' | 'listo' | 'entregado' | 'cancelado'
+  nombreCliente?: string
+  cedula?: string
+  fecha: string | Date
+  estado: EstadoPedido
   total: number
   metodoPago: string
-  direccion: string
-  observaciones: string
+  direccion?: string
+  observaciones?: string
   detalles?: DetallePedido[]
+}
+
+export interface CreatePedidoDetalleDto {
+  idProducto: number
+  cantidad: number
 }
 
 export interface CreatePedidoDto {
   metodoPago: string
-  direccion: string
+  direccion?: string
   observaciones?: string
-  detalles: {
-    idProducto: number
-    cantidad: number
-  }[]
+  detalles: CreatePedidoDetalleDto[]
+}
+
+export interface UpdatePedidoDto {
+  metodoPago?: string
+  direccion?: string
+  observaciones?: string
+}
+
+export interface UpdatePedidoEstadoDto {
+  estado: EstadoPedido
 }
 
 export interface PedidosResponse {
@@ -39,23 +62,24 @@ export interface PedidosResponse {
 }
 
 export interface FilterPedidoDto {
-  estado?: string
+  estado?: EstadoPedido
   fechaDesde?: string
   fechaHasta?: string
   page?: number
   limit?: number
+  sortBy?: string
+  sortOrder?: 'ASC' | 'DESC'
 }
 
 export interface EstadisticasPedidos {
   totalPedidos: number
   totalVentas: number
-  pedidosPorEstado: Record<string, number>
-  ventasPorMes: Array<{
-    mes: string
-    ventas: number
-  }>
-}
-
-export interface CambiarEstadoDto {
-  estado: 'pendiente' | 'confirmado' | 'preparando' | 'listo' | 'entregado' | 'cancelado'
+  porEstado: {
+    pendientes: number
+    confirmados: number
+    enProceso: number
+    enviados: number
+    entregados: number
+    cancelados: number
+  }
 }

@@ -13,3 +13,24 @@ export interface LoginResponse {
     };
     token?: string;
 }   
+
+
+export interface RegisterRequest {
+    nombre: string;
+    email: string;
+    password: string;
+    cedula: string;
+}
+
+
+export interface RegisterResponse {
+    user: {
+        idUsuario: number;
+        nombre: string;
+        cedula: string;
+        email: string;
+        estado: string;
+        roles: string[];
+    };
+    token?: string;
+}

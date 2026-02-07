@@ -10,9 +10,12 @@
       <div class="filter-group">
         <select v-model="filters.estado" class="filter-select">
           <option value="">Todos los estados</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="confirmado">Confirmado</option>
-          <option value="cancelado">Cancelado</option>
+          <option :value="EstadoPedido.PENDIENTE">Pendiente</option>
+          <option :value="EstadoPedido.CONFIRMADO">Confirmado</option>
+          <option :value="EstadoPedido.EN_PROCESO">En Proceso</option>
+          <option :value="EstadoPedido.ENVIADO">Enviado</option>
+          <option :value="EstadoPedido.ENTREGADO">Entregado</option>
+          <option :value="EstadoPedido.CANCELADO">Cancelado</option>
         </select>
         
         <div class="date-group">
@@ -66,7 +69,7 @@
         <div class="card-header">
           <div class="header-top">
             <span class="order-id">#{{ pedido.idPedido }}</span>
-            <span :class="`estado-badge ${pedido.estado}`">{{ pedido.estado }}</span>
+            <span :class="`estado-badge ${pedido.estado.toLowerCase()}`">{{ pedido.estado }}</span>
           </div>
           <div class="header-main">
             <h3 class="client-name">{{ pedido.nombreCliente }}</h3>
@@ -119,13 +122,18 @@
               @change="cambiarEstadoPedido(pedido.idPedido, ($event.target as HTMLSelectElement).value)"
               class="status-select"
             >
-              <option value="">Estado...</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="confirmado">Confirmar</option>
+              <option value="">Cambiar estado...</option>
+              <option 
+                v-for="estado in getAvailableStates(pedido.estado)"
+                :key="estado"
+                :value="estado"
+              >
+                {{ estado }}
+              </option>
             </select>
             
             <button 
-              v-if="pedido.estado !== 'cancelado'" 
+              v-if="pedido.estado !== EstadoPedido.CANCELADO && pedido.estado !== EstadoPedido.ENTREGADO" 
               @click="cancelarPedidoAction(pedido.idPedido)"
               class="btn-icon cancel"
               title="Cancelar Pedido"
@@ -135,7 +143,7 @@
             </button>
             
             <button 
-              v-if="pedido.estado === 'cancelado'" 
+              v-if="pedido.estado === EstadoPedido.CANCELADO" 
               @click="eliminarPedidoAction(pedido.idPedido)"
               class="btn-icon delete"
               title="Eliminar Pedido"
@@ -179,7 +187,7 @@ import {
   cancelarPedido, 
   eliminarPedido 
 } from '@/services/pedido/pedido.service'
-import type { Pedido, FilterPedidoDto } from '@/models/pedido.model'
+import { type Pedido, type FilterPedidoDto, EstadoPedido } from '@/models/pedido.model'
 
 const pedidos = ref<Pedido[]>([])
 const loading = ref(false)
@@ -187,7 +195,12 @@ const page = ref(1)
 const totalPages = ref(1)
 const expandedOrders = ref(new Set<number>())
 
-const filters = ref<FilterPedidoDto>({
+// Extendemos FilterPedidoDto para permitir string vacío en la UI
+interface FilterUI extends Omit<FilterPedidoDto, 'estado'> {
+  estado: EstadoPedido | ''
+}
+
+const filters = ref<FilterUI>({
   estado: '',
   fechaDesde: '',
   fechaHasta: '',
@@ -198,7 +211,12 @@ const filters = ref<FilterPedidoDto>({
 const cargarPedidos = async () => {
   loading.value = true
   try {
-    const response = await obtenerPedidos(filters.value)
+    // Convertimos filters.estado a undefined si es string vacío para la llamada
+    const apiFilters: FilterPedidoDto = {
+      ...filters.value,
+      estado: filters.value.estado === '' ? undefined : filters.value.estado
+    }
+    const response = await obtenerPedidos(apiFilters)
     pedidos.value = response.data || []
     totalPages.value = response.totalPages || 1
   } catch (error: any) {
@@ -234,10 +252,22 @@ const toggleDetails = (id: number) => {
   }
 }
 
+const getAvailableStates = (currentState: EstadoPedido): EstadoPedido[] => {
+  const transitions: Record<string, EstadoPedido[]> = {
+    [EstadoPedido.PENDIENTE]: [EstadoPedido.CONFIRMADO],
+    [EstadoPedido.CONFIRMADO]: [EstadoPedido.EN_PROCESO],
+    [EstadoPedido.EN_PROCESO]: [EstadoPedido.ENVIADO],
+    [EstadoPedido.ENVIADO]: [EstadoPedido.ENTREGADO],
+    [EstadoPedido.ENTREGADO]: [],
+    [EstadoPedido.CANCELADO]: [],
+  }
+  return transitions[currentState] || []
+}
+
 const cambiarEstadoPedido = async (id: number, nuevoEstado: string) => {
   if (!nuevoEstado) return
   try {
-    await cambiarEstado(id, nuevoEstado as any)
+    await cambiarEstado(id, nuevoEstado as EstadoPedido)
     cargarPedidos()
   } catch (error) {
     console.error('Error al cambiar estado:', error)
@@ -265,11 +295,16 @@ const eliminarPedidoAction = async (id: number) => {
   }
 }
 
-const canChangeStatus = (estado: string) => {
-  return ['pendiente', 'confirmado'].includes(estado)
+const canChangeStatus = (estado: EstadoPedido) => {
+  return [
+    EstadoPedido.PENDIENTE, 
+    EstadoPedido.CONFIRMADO, 
+    EstadoPedido.EN_PROCESO,
+    EstadoPedido.ENVIADO
+  ].includes(estado)
 }
 
-const formatDate = (fecha: string) => {
+const formatDate = (fecha: string | Date) => {
   return new Date(fecha).toLocaleDateString('es-ES', {
     day: '2-digit',
     month: 'short', 
@@ -430,8 +465,12 @@ onMounted(() => {
   letter-spacing: 0.5px;
 }
 
+/* Updated Colors for new states */
 .estado-badge.pendiente { background: #fff3cd; color: #856404; }
 .estado-badge.confirmado { background: #d4edda; color: #155724; }
+.estado-badge.en_proceso { background: #e2e6ea; color: #4b4b4b; border: 1px solid #ced4da; } 
+.estado-badge.enviado { background: #cce5ff; color: #004085; }
+.estado-badge.entregado { background: #d1e7dd; color: #0f5132; }
 .estado-badge.cancelado { background: #ffeaa7; color: #d63031; }
 
 .header-main {
@@ -463,7 +502,7 @@ onMounted(() => {
 .card-body {
   padding: 1.5rem;
   flex: 1;
-}
+  }
 
 .location-info, .notes-info {
   display: flex;
