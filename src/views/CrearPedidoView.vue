@@ -79,7 +79,7 @@
             <div v-if="error" class="error-msg">{{ error }}</div>
 
             <button type="submit" class="btn-primary btn-block" :disabled="!canCreateOrder">
-              Confirmar Pedido
+              Crear Pedido
             </button>
           </form>
         </div>

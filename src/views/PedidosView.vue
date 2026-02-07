@@ -133,7 +133,7 @@
             </select>
             
             <button 
-              v-if="pedido.estado !== EstadoPedido.CANCELADO && pedido.estado !== EstadoPedido.ENTREGADO" 
+              v-if="canCancel(pedido.estado)" 
               @click="cancelarPedidoAction(pedido.idPedido)"
               class="btn-icon cancel"
               title="Cancelar Pedido"
@@ -252,7 +252,8 @@ const toggleDetails = (id: number) => {
   }
 }
 
-const getAvailableStates = (currentState: EstadoPedido): EstadoPedido[] => {
+const getAvailableStates = (currentState: string): EstadoPedido[] => {
+  const normalized = currentState?.toLowerCase() as EstadoPedido
   const transitions: Record<string, EstadoPedido[]> = {
     [EstadoPedido.PENDIENTE]: [EstadoPedido.CONFIRMADO],
     [EstadoPedido.CONFIRMADO]: [EstadoPedido.EN_PROCESO],
@@ -261,16 +262,17 @@ const getAvailableStates = (currentState: EstadoPedido): EstadoPedido[] => {
     [EstadoPedido.ENTREGADO]: [],
     [EstadoPedido.CANCELADO]: [],
   }
-  return transitions[currentState] || []
+  return transitions[normalized] || []
 }
 
 const cambiarEstadoPedido = async (id: number, nuevoEstado: string) => {
   if (!nuevoEstado) return
   try {
     await cambiarEstado(id, nuevoEstado as EstadoPedido)
-    cargarPedidos()
-  } catch (error) {
+    cargarPedidos() // Recargar para ver cambios
+  } catch (error: any) {
     console.error('Error al cambiar estado:', error)
+    alert(error?.response?.data?.message || 'Error al cambiar el estado del pedido')
   }
 }
 
@@ -279,8 +281,9 @@ const cancelarPedidoAction = async (id: number) => {
   try {
     await cancelarPedido(id)
     cargarPedidos()
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al cancelar pedido:', error)
+    alert(error?.response?.data?.message || 'No se pudo cancelar el pedido')
   }
 }
 
@@ -289,19 +292,27 @@ const eliminarPedidoAction = async (id: number) => {
     try {
       await eliminarPedido(id)
       cargarPedidos()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al eliminar pedido:', error)
+      alert(error?.response?.data?.message || 'Error al eliminar el pedido')
     }
   }
 }
 
-const canChangeStatus = (estado: EstadoPedido) => {
+const canChangeStatus = (estado: string) => {
+  const normalized = estado?.toLowerCase() as EstadoPedido
   return [
     EstadoPedido.PENDIENTE, 
     EstadoPedido.CONFIRMADO, 
     EstadoPedido.EN_PROCESO,
     EstadoPedido.ENVIADO
-  ].includes(estado)
+  ].includes(normalized)
+}
+
+const canCancel = (estado: string) => {
+  const normalized = estado?.toLowerCase() as EstadoPedido
+  // Según backend, solo se pueden cancelar pedidos PENDIENTE o CONFIRMADO
+  return [EstadoPedido.PENDIENTE, EstadoPedido.CONFIRMADO].includes(normalized)
 }
 
 const formatDate = (fecha: string | Date) => {

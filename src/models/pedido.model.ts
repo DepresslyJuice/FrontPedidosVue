@@ -1,11 +1,10 @@
-// Enum para los estados del pedido, alineado con el backend
 export enum EstadoPedido {
-  PENDIENTE = 'PENDIENTE',
-  CONFIRMADO = 'CONFIRMADO',
-  EN_PROCESO = 'EN_PROCESO',
-  ENVIADO = 'ENVIADO',
-  ENTREGADO = 'ENTREGADO',
-  CANCELADO = 'CANCELADO',
+  PENDIENTE = 'pendiente',
+  CONFIRMADO = 'confirmado',
+  EN_PROCESO = 'en_proceso',
+  ENVIADO = 'enviado',
+  ENTREGADO = 'entregado',
+  CANCELADO = 'cancelado',
 }
 
 export interface DetallePedido {
