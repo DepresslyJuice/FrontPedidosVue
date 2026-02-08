@@ -121,7 +121,7 @@
                  @click="seleccionarProducto(prod)"
                >
                  <span>{{ prod.nombre }}</span>
-                 <span class="price">{{ formatCurrency(prod.precio) }} (Stock: {{ prod.stock }})</span>
+                 <span class="price">{{ formatCurrency(Number(prod.precio)) }}</span>
                </div>
              </div>
            </div>

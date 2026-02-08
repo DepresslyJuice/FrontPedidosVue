@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 // Configuración global de axios
-axios.defaults.baseURL = 'https://security-module.onrender.com/api/v1'
-//axios.defaults.baseURL = 'http://localhost:3000/api/v1'
+//axios.defaults.baseURL = 'https://security-module.onrender.com/api/v1'
+axios.defaults.baseURL = 'http://localhost:3000/api/v1'
 axios.defaults.withCredentials = true
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 

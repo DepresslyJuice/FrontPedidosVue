@@ -63,12 +63,7 @@ export interface UpdateFacturaDto {
     observaciones?: string
 }
 
-export interface FacturaResponseDto { // Often same as Factura, but could differ
-    idFactura: number
-    numeroFactura: string
-    // ... other fields
-    estado: EstadoFactura
-}
+export type FacturaResponseDto = Factura
 
 export interface PaginatedFacturasResponseDto {
     data: Factura[]
