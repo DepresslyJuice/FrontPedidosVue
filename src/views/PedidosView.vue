@@ -117,30 +117,26 @@
           </button>
 
           <div class="action-buttons">
-            <select 
-              v-if="canChangeStatus(pedido.estado)" 
-              @change="cambiarEstadoPedido(pedido.idPedido, ($event.target as HTMLSelectElement).value)"
-              class="status-select"
-            >
-              <option value="">Cambiar estado...</option>
-              <option 
+            <div class="status-actions">
+              <button 
+                v-if="canChangeStatus(pedido.estado)"
                 v-for="estado in getAvailableStates(pedido.estado)"
                 :key="estado"
-                :value="estado"
+                @click="cambiarEstadoPedido(pedido.idPedido, estado)"
+                class="btn-action"
+                :class="estado"
               >
-                {{ estado }}
-              </option>
-            </select>
-            
-            <button 
-              v-if="canCancel(pedido.estado)" 
-              @click="cancelarPedidoAction(pedido.idPedido)"
-              class="btn-icon cancel"
-              title="Cancelar Pedido"
-            >
-              <Ban :size="18" />
-              <span class="btn-tooltip">Cancelar</span>
-            </button>
+                {{ getActionLabel(estado) }}
+              </button>
+              
+              <button 
+                v-if="canCancel(pedido.estado)" 
+                @click="cancelarPedidoAction(pedido.idPedido)"
+                class="btn-action cancel"
+              >
+                Cancelar
+              </button>
+            </div>
             
             <button 
               v-if="pedido.estado === EstadoPedido.CANCELADO" 
@@ -185,7 +181,8 @@ import {
   obtenerPedidos, 
   cambiarEstado, 
   cancelarPedido, 
-  eliminarPedido 
+  eliminarPedido,
+  aprobarPedido
 } from '@/services/pedido/pedido.service'
 import { type Pedido, type FilterPedidoDto, EstadoPedido } from '@/models/pedido.model'
 import { 
@@ -271,7 +268,11 @@ const getAvailableStates = (currentState: string): EstadoPedido[] => {
 const cambiarEstadoPedido = async (id: number, nuevoEstado: string) => {
   if (!nuevoEstado) return
   try {
-    await cambiarEstado(id, nuevoEstado as EstadoPedido)
+    if (nuevoEstado === EstadoPedido.CONFIRMADO) {
+      await aprobarPedido(id)
+    } else {
+      await cambiarEstado(id, nuevoEstado as EstadoPedido)
+    }
     cargarPedidos() // Recargar para ver cambios
   } catch (error: any) {
     console.error('Error al cambiar estado:', error)
@@ -324,6 +325,16 @@ const formatDate = (fecha: string | Date) => {
     month: 'short', 
     year: 'numeric'
   })
+}
+
+const getActionLabel = (estado: EstadoPedido) => {
+  switch (estado) {
+    case EstadoPedido.CONFIRMADO: return 'Aprobar'
+    case EstadoPedido.EN_PROCESO: return 'Comenzar Preparación'
+    case EstadoPedido.ENVIADO: return 'Marcar como Enviado'
+    case EstadoPedido.ENTREGADO: return 'Marcar como Entregado'
+    default: return estado.replace('_', ' ')
+  }
 }
 
 onMounted(() => {
@@ -595,6 +606,44 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 0.85rem;
   outline: none;
+}
+
+.status-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-action {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  text-transform: capitalize;
+}
+
+.btn-action.confirmado { background: #00b894; }
+.btn-action.confirmado:hover { background: #00a884; }
+
+.btn-action.en_proceso { background: #0984e3; }
+.btn-action.en_proceso:hover { background: #0077d3; }
+
+.btn-action.enviado { background: #6c5ce7; }
+.btn-action.enviado:hover { background: #5a4bd1; }
+
+.btn-action.entregado { background: #2d3436; }
+.btn-action.entregado:hover { background: #1b1e1f; }
+
+.btn-action.cancel { 
+  background: white; 
+  color: #d63031;
+  border: 1px solid #d63031;
+}
+.btn-action.cancel:hover { 
+  background: #fff5f5;
 }
 
 .btn-icon {

@@ -51,3 +51,8 @@ export const cancelarPedido = async (id: number): Promise<Pedido> => {
 export const eliminarPedido = async (id: number): Promise<void> => {
   await axios.delete(`${API_URL}/${id}`)
 }
+
+export const aprobarPedido = async (id: number): Promise<Pedido> => {
+  const response = await axios.patch<Pedido>(`${API_URL}/${id}/aprobar`)
+  return response.data
+}
