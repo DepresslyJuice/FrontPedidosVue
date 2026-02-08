@@ -10,6 +10,7 @@
       <router-link to="/productos" class="nav-link">Productos</router-link>
       <router-link v-if="isAdmin" to="/pedidos" class="nav-link">Pedidos</router-link>
       <router-link v-if="isAdmin" to="/crear-pedido" class="nav-link">Crear Pedido</router-link>
+      <router-link to="/facturas" class="nav-link">Facturación</router-link>
       
       <button @click="toggleCart" class="cart-btn" title="Ver Carrito">
         <ShoppingCart :size="24" />
