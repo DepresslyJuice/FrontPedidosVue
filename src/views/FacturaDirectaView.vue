@@ -21,7 +21,34 @@
         <div class="card-header">
           <h2><User :size="20" /> Datos del Cliente</h2>
         </div>
-        <div class="card-body form-grid">
+        <div class="card-body">
+          <!-- Buscador de Clientes -->
+          <div class="search-box mb-4">
+             <Search :size="18" class="search-icon" />
+             <input 
+               type="text" 
+               v-model="userSearch" 
+               placeholder="Buscar cliente (Nombre o Cédula)..." 
+               class="search-input"
+               @input="buscarUsuarios"
+               @focus="showUserResults = true"
+               @blur="setTimeout(() => showUserResults = false, 200)"
+             >
+             <!-- Resultados de búsqueda -->
+             <div v-if="userSearchResults.length > 0 && showUserResults" class="search-results">
+               <div 
+                 v-for="user in userSearchResults" 
+                 :key="user.idUsuario" 
+                 class="search-item"
+                 @click="seleccionarUsuario(user)"
+               >
+                 <span>{{ user.nombre }}</span>
+                 <span class="price">{{ user.cedula }}</span>
+               </div>
+             </div>
+          </div>
+
+          <div class="form-grid">
           <div class="form-group">
             <label>ID Cliente *</label>
             <input 
@@ -70,9 +97,9 @@
           <div class="form-group">
             <label>Forma de Pago *</label>
             <select v-model="form.formaPago" class="form-select">
-              <option value="EFECTIVO">Efectivo</option>
-              <option value="TRANSFERENCIA">Transferencia</option>
-              <option value="TARJETA">Tarjeta de Crédito/Débito</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="tarjeta">Tarjeta de Crédito/Débito</option>
             </select>
           </div>
           <div class="form-group span-2">
@@ -95,6 +122,7 @@
           </div>
         </div>
       </div>
+    </div>
 
       <!-- Sección Productos -->
       <div class="card productos-section">
@@ -217,12 +245,18 @@ import { createFacturaDirecta } from '@/services/facturacion/facturacion.service
 import { getProductos } from '@/services/producto/producto.service'
 import type { CreateFacturaDto, CreateFacturaDetalleDto } from '@/models/factura.model'
 import type { Producto } from '@/models/producto.model'
+import { getUsuarios } from '@/services/usuario/usuario.service'
+import type { Usuario } from '@/models/usuario.model'
 
 const router = useRouter()
 const loading = ref(false)
 const productSearch = ref('')
 const searchResults = ref<Producto[]>([])
 const showResults = ref(false)
+
+const userSearch = ref('')
+const userSearchResults = ref<Usuario[]>([])
+const showUserResults = ref(false)
 
 // Extended interface for UI mapping (needs name for display)
 interface DetalleUI extends CreateFacturaDetalleDto {
@@ -236,7 +270,7 @@ const form = reactive({
   email: '',
   telefono: '',
   direccion: '',
-  formaPago: 'EFECTIVO',
+  formaPago: 'efectivo',
   observaciones: '',
   descuento: 0,
   detalles: [] as DetalleUI[]
@@ -264,7 +298,46 @@ const totales = computed(() => {
   return { subtotal: subtotalNeto, iva, total }
 })
 
+
+
 // Methods
+const buscarUsuarios = async () => {
+  if (userSearch.value.length < 2) {
+    userSearchResults.value = []
+    return
+  }
+  
+  try {
+    console.log('Buscando usuarios...')
+    const response = await getUsuarios()
+    console.log('Respuesta de usuarios:', response)
+    console.log('Total usuarios:', response.data?.length)
+    
+    // Client-side filtering as simple implementation
+    const term = userSearch.value.toLowerCase()
+    userSearchResults.value = response.data.filter(u => 
+      u.nombre.toLowerCase().includes(term) || 
+      u.cedula.includes(term)
+    )
+    console.log('Usuarios filtrados:', userSearchResults.value.length)
+    showUserResults.value = true
+  } catch (error) {
+    console.error('Error buscando usuarios', error)
+    console.error('Error details:', error?.response?.data)
+  }
+}
+
+const seleccionarUsuario = (user: Usuario) => {
+  form.idCliente = user.idUsuario
+  form.nombreCliente = user.nombre
+  form.cedula = user.cedula
+  form.email = user.email
+  // form.telefono and direccion are not in Usuario model yet, leave as is or empty
+  
+  userSearch.value = user.nombre
+  showUserResults.value = false
+}
+
 const buscarProductos = async () => {
   if (productSearch.value.length < 2) {
     searchResults.value = []
@@ -273,15 +346,7 @@ const buscarProductos = async () => {
   }
   
   try {
-    // Assuming backend supports filtering by name via 'nombre'? 
-    // FilterProductoDto uses partial matching? 
-    // The previous view_file of producto.service.ts showed getProductos takes filters.
-    // The backend logic is not visible for filters, but assuming a simple filter works.
-    // If not, we might load all and filter in frontend (not ideal but safe for limited products).
-    // Let's try passing 'nombre' in Query Params if 'FilterProductoDto' supports it.
-    // Check product.model.ts? I didn't verify FilterProductoDto. 
-    // Assuming standard implementation:
-    const response = await getProductos({ nombre: productSearch.value } as any)
+    const response = await getProductos({ search: productSearch.value })
     searchResults.value = response.data || []
     showResults.value = true
   } catch (error) {
@@ -334,18 +399,37 @@ const guardarFactura = async () => {
       descuento: form.descuento,
       detalles: form.detalles.map(d => ({
         idProducto: d.idProducto,
+        nombreProducto: d.nombreProducto,
         cantidad: d.cantidad,
         precioUnitario: d.precioUnitario,
         descuento: d.descuento
       }))
     }
 
+    console.log('Enviando factura:', dto)
     await createFacturaDirecta(dto)
     alert('Factura emitida correctamente')
     router.push('/facturas')
   } catch (error: any) {
     console.error('Error al emitir factura:', error)
-    alert(error?.response?.data?.message || 'Error al emitir factura')
+    console.error('Error response:', error?.response?.data)
+    
+    // Show detailed validation errors
+    const errorMsg = error?.response?.data?.message
+    const validationErrors = error?.response?.data?.errors
+    
+    let fullErrorMsg = 'Error al emitir factura:\n\n'
+    if (Array.isArray(errorMsg)) {
+      fullErrorMsg += errorMsg.join('\n')
+    } else if (typeof errorMsg === 'string') {
+      fullErrorMsg += errorMsg
+    }
+    
+    if (validationErrors && Array.isArray(validationErrors)) {
+      fullErrorMsg += '\n\nDetalles:\n' + validationErrors.join('\n')
+    }
+    
+    alert(fullErrorMsg)
   } finally {
     loading.value = false
   }
@@ -432,6 +516,10 @@ const guardarFactura = async () => {
 }
 
 .card-body { padding: 1.5rem; }
+
+.card-body { padding: 1.5rem; }
+
+.mb-4 { margin-bottom: 1rem; }
 
 /* Form Grid */
 .form-grid {

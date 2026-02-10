@@ -40,8 +40,9 @@ export interface Factura {
 
 export interface CreateFacturaDetalleDto {
     idProducto: number
+    nombreProducto: string
     cantidad: number
-    precioUnitario: number // Often backend re-validates, but frontend might send it
+    precioUnitario: number
     descuento?: number
 }
 
