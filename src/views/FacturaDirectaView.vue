@@ -32,7 +32,7 @@
                class="search-input"
                @input="buscarUsuarios"
                @focus="showUserResults = true"
-               @blur="window.setTimeout(() => showUserResults = false, 200)"
+               @blur="handleUserSearchBlur"
              >
              <!-- Resultados de búsqueda -->
              <div v-if="userSearchResults.length > 0 && showUserResults" class="search-results">
@@ -257,6 +257,13 @@ const showResults = ref(false)
 const userSearch = ref('')
 const userSearchResults = ref<Usuario[]>([])
 const showUserResults = ref(false)
+
+// Helper function for blur event
+const handleUserSearchBlur = () => {
+  setTimeout(() => {
+    showUserResults.value = false
+  }, 200)
+}
 
 // Extended interface for UI mapping (needs name for display)
 interface DetalleUI extends CreateFacturaDetalleDto {
