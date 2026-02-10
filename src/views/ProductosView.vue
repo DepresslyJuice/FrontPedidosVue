@@ -2,7 +2,7 @@
   <div class="productos-container">
     <div class="header">
       <h1>Productos</h1>
-      <button @click="openModal()" class="btn-primary">Nuevo Producto</button>
+      <button v-if="!isCliente" @click="openModal()" class="btn-primary">Nuevo Producto</button>
     </div>
     
     <div class="filters">
@@ -28,7 +28,7 @@
             <th>Descripción</th>
             <th>Precio</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            <th v-if="!isCliente">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,7 @@
                 {{ producto.activo ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
-            <td class="actions">
+            <td v-if="!isCliente" class="actions">
               <button @click="openModal(producto)" class="btn-edit">Editar</button>
               <button @click="handleToggleActivo(producto.idProducto)" class="btn-toggle">
                 {{ producto.activo ? 'Desactivar' : 'Activar' }}
@@ -136,6 +136,10 @@ const form = ref<CreateProductoDto>({
   precio: ''
 })
 
+// User role checking
+const user = ref<any>(null)
+const isCliente = ref(false)
+
 const loadProductos = async () => {
   loading.value = true
   error.value = ''
@@ -227,6 +231,20 @@ const changePage = (page: number) => {
 }
 
 onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    try {
+      user.value = JSON.parse(storedUser)
+      // Check if user is CLIENTE
+      const userRoles = user.value?.roles?.map((r: any) => {
+        if (typeof r === 'string') return r.toUpperCase()
+        return r.nombre?.toUpperCase()
+      }) || []
+      isCliente.value = userRoles.includes('CLIENTE')
+    } catch (e) {
+      console.error('Error parsing user', e)
+    }
+  }
   loadProductos()
 })
 </script>

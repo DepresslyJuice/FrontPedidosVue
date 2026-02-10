@@ -185,7 +185,7 @@ const isAdmin = computed(() => {
 })
 
 const canCreate = computed(() => {
-  return hasRole('vendedor') || hasRole('supervisor') || hasRole('admin')
+  return hasRole('vendedor') || hasRole('admin')
 })
 
 // Methods

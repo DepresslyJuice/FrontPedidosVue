@@ -116,7 +116,7 @@
             {{ expandedOrders.has(pedido.idPedido) ? 'Ocultar detalles' : 'Ver detalles' }}
           </button>
 
-          <div class="action-buttons">
+          <div v-if="!isCliente" class="action-buttons">
             <div class="status-actions">
               <button 
                 v-if="canChangeStatus(pedido.estado)"
@@ -207,6 +207,10 @@ const filters = ref<FilterUI>({
   page: 1,
   limit: 10
 })
+
+// User role checking
+const user = ref<any>(null)
+const isCliente = ref(false)
 
 const cargarPedidos = async () => {
   loading.value = true
@@ -347,6 +351,20 @@ const getActionLabel = (estado: EstadoPedido) => {
 }
 
 onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    try {
+      user.value = JSON.parse(storedUser)
+      // Check if user is CLIENTE
+      const userRoles = user.value?.roles?.map((r: any) => {
+        if (typeof r === 'string') return r.toUpperCase()
+        return r.nombre?.toUpperCase()
+      }) || []
+      isCliente.value = userRoles.includes('CLIENTE')
+    } catch (e) {
+      console.error('Error parsing user', e)
+    }
+  }
   cargarPedidos()
 })
 </script>

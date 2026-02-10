@@ -38,13 +38,19 @@ const router = createRouter({
       path: '/pedidos',
       name: 'pedidos',
       component: PedidosView,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: {
+        requiresAuth: true,
+        allowedRoles: ['ADMIN', 'SUPERVISOR', 'CLIENTE']
+      }
     },
     {
       path: '/crear-pedido',
       name: 'crear-pedido',
       component: CrearPedidoView,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: {
+        requiresAuth: true,
+        allowedRoles: ['ADMIN', 'SUPERVISOR', 'CLIENTE']
+      }
     },
     {
       path: '/perfil',

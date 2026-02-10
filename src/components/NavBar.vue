@@ -8,8 +8,8 @@
     
     <div class="nav-links">
       <router-link to="/productos" class="nav-link">Productos</router-link>
-      <router-link v-if="isAdmin" to="/pedidos" class="nav-link">Pedidos</router-link>
-      <router-link v-if="isAdmin" to="/crear-pedido" class="nav-link">Crear Pedido</router-link>
+      <router-link v-if="canManagePedidos" to="/pedidos" class="nav-link">Pedidos</router-link>
+      <router-link v-if="canManagePedidos" to="/crear-pedido" class="nav-link">Crear Pedido</router-link>
       <router-link to="/facturas" class="nav-link">Facturación</router-link>
       
       <button @click="toggleCart" class="cart-btn" title="Ver Carrito">
@@ -81,8 +81,16 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-const isAdmin = computed(() => {
-  return user.value?.roles?.includes('admin')
+const canManagePedidos = computed(() => {
+  if (!user.value?.roles) return false
+  
+  // Handle both string arrays and object arrays
+  const userRoles = user.value.roles.map((r: any) => {
+    if (typeof r === 'string') return r.toUpperCase()
+    return r.nombre?.toUpperCase()
+  })
+  
+  return userRoles.includes('ADMIN') || userRoles.includes('SUPERVISOR') || userRoles.includes('CLIENTE')
 })
 
 const userInitials = computed(() => {
