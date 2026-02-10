@@ -11,6 +11,7 @@
       <router-link v-if="canManagePedidos" to="/pedidos" class="nav-link">Pedidos</router-link>
       <router-link v-if="canManagePedidos" to="/crear-pedido" class="nav-link">Crear Pedido</router-link>
       <router-link to="/facturas" class="nav-link">Facturación</router-link>
+      <router-link v-if="isAdmin" to="/auditoria" class="nav-link">Auditoría</router-link>
       
       <button @click="toggleCart" class="cart-btn" title="Ver Carrito">
         <ShoppingCart :size="24" />
@@ -91,6 +92,18 @@ const canManagePedidos = computed(() => {
   })
   
   return userRoles.includes('ADMIN') || userRoles.includes('SUPERVISOR') || userRoles.includes('CLIENTE')
+})
+
+const isAdmin = computed(() => {
+  if (!user.value?.roles) return false
+  
+  // Handle both string arrays and object arrays
+  const userRoles = user.value.roles.map((r: any) => {
+    if (typeof r === 'string') return r.toLowerCase()
+    return r.nombre?.toLowerCase()
+  })
+  
+  return userRoles.includes('admin')
 })
 
 const userInitials = computed(() => {

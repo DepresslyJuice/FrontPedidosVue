@@ -2,7 +2,7 @@
   <div class="productos-container">
     <div class="header">
       <h1>Productos</h1>
-      <button v-if="!isCliente" @click="openModal()" class="btn-primary">Nuevo Producto</button>
+      <button v-if="isAdmin" @click="openModal()" class="btn-primary">Nuevo Producto</button>
     </div>
     
     <div class="filters">
@@ -28,7 +28,7 @@
             <th>Descripción</th>
             <th>Precio</th>
             <th>Estado</th>
-            <th v-if="!isCliente">Acciones</th>
+            <th v-if="isAdmin">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,7 @@
                 {{ producto.activo ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
-            <td v-if="!isCliente" class="actions">
+            <td v-if="isAdmin" class="actions">
               <button @click="openModal(producto)" class="btn-edit">Editar</button>
               <button @click="handleToggleActivo(producto.idProducto)" class="btn-toggle">
                 {{ producto.activo ? 'Desactivar' : 'Activar' }}
@@ -138,7 +138,7 @@ const form = ref<CreateProductoDto>({
 
 // User role checking
 const user = ref<any>(null)
-const isCliente = ref(false)
+const isAdmin = ref(false)
 
 const loadProductos = async () => {
   loading.value = true
@@ -235,12 +235,12 @@ onMounted(() => {
   if (storedUser) {
     try {
       user.value = JSON.parse(storedUser)
-      // Check if user is CLIENTE
+      // Check if user is ADMIN
       const userRoles = user.value?.roles?.map((r: any) => {
         if (typeof r === 'string') return r.toUpperCase()
         return r.nombre?.toUpperCase()
       }) || []
-      isCliente.value = userRoles.includes('CLIENTE')
+      isAdmin.value = userRoles.includes('ADMIN')
     } catch (e) {
       console.error('Error parsing user', e)
     }

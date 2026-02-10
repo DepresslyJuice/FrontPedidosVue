@@ -8,6 +8,7 @@ import RecoveryPasswordView from '@/views/RecoveryPasswordView.vue'
 import PerfilView from '@/views/PerfilView.vue'
 import FacturasView from '@/views/FacturasView.vue'
 import FacturaDirectaView from '@/views/FacturaDirectaView.vue'
+import AuditoriaView from '@/views/AuditoriaView.vue'
 
 
 const router = createRouter({
@@ -72,6 +73,15 @@ const router = createRouter({
       name: 'facturas',
       component: FacturasView,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/auditoria',
+      name: 'auditoria',
+      component: AuditoriaView,
+      meta: {
+        requiresAuth: true,
+        allowedRoles: ['admin']
+      }
     },
     {
       path: '/',
