@@ -32,7 +32,7 @@
                class="search-input"
                @input="buscarUsuarios"
                @focus="showUserResults = true"
-               @blur="setTimeout(() => showUserResults = false, 200)"
+               @blur="window.setTimeout(() => showUserResults = false, 200)"
              >
              <!-- Resultados de búsqueda -->
              <div v-if="userSearchResults.length > 0 && showUserResults" class="search-results">
@@ -321,7 +321,7 @@ const buscarUsuarios = async () => {
     )
     console.log('Usuarios filtrados:', userSearchResults.value.length)
     showUserResults.value = true
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error buscando usuarios', error)
     console.error('Error details:', error?.response?.data)
   }
