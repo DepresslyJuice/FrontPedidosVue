@@ -58,7 +58,7 @@ const router = createRouter({
       component: FacturaDirectaView,
       meta: {
         requiresAuth: true,
-        allowedRoles: ['admin', 'vendedor', 'supervisor']
+        allowedRoles: ['ADMIN', 'VENDEDOR', 'SUPERVISOR']
       }
     },
     {
@@ -77,28 +77,71 @@ const router = createRouter({
 router.beforeEach((to) => {
   const user = localStorage.getItem('user')
 
+  console.log('🔍 Router Guard - Navigating to:', to.path)
+  console.log('📦 Raw user from localStorage:', user)
+
   // Si la ruta requiere autenticación y no hay usuario, redirigir al login
   if (to.meta.requiresAuth && !user) {
+    console.log('❌ No user found, redirecting to login')
     return '/login'
   }
 
   // Parse user if exists
   const userData = user ? JSON.parse(user) : null
 
+  if (userData) {
+    console.log('👤 Parsed user data:', userData)
+    console.log('🎭 User roles array:', userData.roles)
+  }
+
   // Check for allowed roles
   if (to.meta.allowedRoles && userData) {
-    const roles = to.meta.allowedRoles as string[]
-    const hasRole = roles.some(role => userData.roles?.includes(role))
+    const allowedRoles = to.meta.allowedRoles as string[]
+
+    // Handle both string arrays and object arrays
+    const userRoles = userData.roles?.map((r: any) => {
+      // If role is already a string, return it
+      if (typeof r === 'string') return r
+      // If role is an object with nombre property, extract it
+      return r.nombre
+    }) || []
+
+    console.log('🔐 Checking allowed roles...')
+    console.log('   Required roles:', allowedRoles)
+    console.log('   User role names:', userRoles)
+
+    // Case-insensitive comparison
+    const userRolesUpper = userRoles.map(r => r?.toUpperCase())
+    const allowedRolesUpper = allowedRoles.map(r => r.toUpperCase())
+    const hasRole = allowedRolesUpper.some(role => userRolesUpper.includes(role))
+
+    console.log('   Has required role?', hasRole)
+
     if (!hasRole) {
+      console.warn('❌ Access denied. User roles:', userRoles, 'Required:', allowedRoles)
       return '/productos' // Redirect to default allowed page
     }
+    console.log('✅ Access granted!')
   }
 
   // Legacy admin check (kept for compatibility with existing routes)
   if (to.meta.requiresAdmin && userData) {
-    if (!userData.roles?.includes('admin')) {
+    // Handle both string arrays and object arrays
+    const userRoles = userData.roles?.map((r: any) => {
+      if (typeof r === 'string') return r
+      return r.nombre
+    }) || []
+
+    console.log('🔐 Checking admin access...')
+    console.log('   User roles:', userRoles)
+
+    // Case-insensitive comparison
+    const userRolesUpper = userRoles.map(r => r?.toUpperCase())
+    if (!userRolesUpper.includes('ADMIN')) {
+      console.warn('❌ Admin access denied. User roles:', userRoles)
       return '/productos'
     }
+    console.log('✅ Admin access granted!')
   }
 })
 

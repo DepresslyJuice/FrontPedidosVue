@@ -216,6 +216,15 @@ const cargarPedidos = async () => {
       ...filters.value,
       estado: filters.value.estado === '' ? undefined : filters.value.estado
     }
+    
+    // Fix: Add one day to fechaHasta to include the entire end date
+    // Backend interprets "2026-02-09" as "2026-02-09T00:00:00", excluding the whole day
+    if (apiFilters.fechaHasta) {
+      const endDate = new Date(apiFilters.fechaHasta)
+      endDate.setDate(endDate.getDate() + 1)
+      apiFilters.fechaHasta = endDate.toISOString().split('T')[0]
+    }
+    
     const response = await obtenerPedidos(apiFilters)
     pedidos.value = response.data || []
     totalPages.value = response.totalPages || 1
