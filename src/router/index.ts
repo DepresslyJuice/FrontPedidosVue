@@ -111,8 +111,8 @@ router.beforeEach((to) => {
     console.log('   User role names:', userRoles)
 
     // Case-insensitive comparison
-    const userRolesUpper = userRoles.map(r => r?.toUpperCase())
-    const allowedRolesUpper = allowedRoles.map(r => r.toUpperCase())
+    const userRolesUpper = userRoles.map((r: string) => r?.toUpperCase())
+    const allowedRolesUpper = allowedRoles.map((r: string) => r.toUpperCase())
     const hasRole = allowedRolesUpper.some(role => userRolesUpper.includes(role))
 
     console.log('   Has required role?', hasRole)
@@ -136,7 +136,7 @@ router.beforeEach((to) => {
     console.log('   User roles:', userRoles)
 
     // Case-insensitive comparison
-    const userRolesUpper = userRoles.map(r => r?.toUpperCase())
+    const userRolesUpper = userRoles.map((r: string) => r?.toUpperCase())
     if (!userRolesUpper.includes('ADMIN')) {
       console.warn('❌ Admin access denied. User roles:', userRoles)
       return '/productos'
